@@ -1,11 +1,11 @@
 # LAB 01 · Cloud Network & Secure Access
 
-> **ICT24167 Network Management** · สัปดาห์ที่ 1 ของชุด AWS · เวลา 120 นาที · ทำคนเดียว (นั่งคู่กับเพื่อนเพื่อช่วยกันตรวจได้)
+> **ICT24167 Network Management** · สัปดาห์ที่ 1 ของชุด AWS · เวลา 120 นาที · **ทำเป็นกลุ่ม (1 กลุ่ม = 1 AWS Account)** แต่ทุกคนสร้าง EC2 ของตัวเอง
 > [← กลับหน้าหลัก](README.md) · [ไป LAB 02 →](lab02-my-first-web-app.md)
 
 ## 🎯 จบ Lab นี้แล้วทำอะไรได้
 
-- [ ] สร้างบัญชี AWS ที่ **ปลอดภัยตั้งแต่วันแรก** (MFA + แจ้งเตือนค่าใช้จ่าย)
+- [ ] สร้างบัญชี AWS แบบ New Experience ที่ **ปลอดภัยตั้งแต่วันแรก** (MFA) และเชิญเพื่อนเข้า Project โดยไม่แชร์รหัสผ่าน
 - [ ] ออกแบบและสร้าง **VPC / Subnet / Internet Gateway / Route Table** ด้วยมือ และอธิบายได้ว่าแต่ละชิ้นเทียบกับอุปกรณ์ใดใน Packet Tracer
 - [ ] เขียนกฎ **Security Group** ให้เปิดเฉพาะที่จำเป็น และอธิบายว่าทำไมจึงเรียกว่า **Stateful**
 - [ ] สร้าง **EC2** และ Remote เข้าไปด้วย **SSH จาก CMD** (และรู้ทางเลือก Instance Connect / PuTTY)
@@ -15,7 +15,7 @@
 
 | Part | หัวข้อ | เวลา |
 |---|---|---|
-| 0 | สมัคร AWS + MFA + Budget | 25 นาที |
+| 0 | สมัคร AWS (New Experience) + MFA + เชิญสมาชิก | 25 นาที |
 | 1 | VPC, Subnet, Internet Gateway, Route Table | 25 นาที |
 | 2 | Security Group | 10 นาที |
 | 3 | สร้าง EC2 Instance | 15 นาที |
@@ -30,57 +30,109 @@
 
 ---
 
-## Part 0 · สมัคร AWS Account (25 นาที)
-
-### 0.1 สมัครบัญชี
-
-1. เปิด <https://aws.amazon.com/free/> แล้วกด **Create a Free Account** (หรือ *Create an AWS Account*)
-2. กรอก **Root user email address** และ **AWS account name** (เช่น `spu-รหัสนักศึกษา`) แล้วกด *Verify email address*
-3. นำรหัสยืนยันจากอีเมลมากรอก
-4. ตั้ง **Root password** ที่แข็งแรง (อย่างน้อย 12 ตัว ผสมตัวพิมพ์เล็ก-ใหญ่ ตัวเลข สัญลักษณ์) และ **ห้ามใช้ซ้ำกับบัญชีอื่น**
-5. เลือก **Choose your account plan** → **Free plan**
-
-   | Plan | ความหมาย |
-   |---|---|
-   | ✅ **Free plan** | ใช้เครดิตฟรี ไม่ถูกเรียกเก็บเงิน ใช้ได้ 6 เดือนหรือจนเครดิตหมด (เลือกอันนี้) |
-   | Paid plan | ใช้ได้ทุกบริการ เมื่อเครดิตหมดจะถูกเรียกเก็บเงินจริง |
-
-6. Contact information: เลือก **Personal** แล้วกรอกข้อมูลเป็นภาษาอังกฤษ
-7. Billing information: กรอกบัตร (ระบบอาจตัดยอดทดสอบเล็กน้อยแล้วคืนให้)
-8. Identity verification: เลือก **Text message (SMS)** แล้วกรอกรหัสที่ได้รับ
-9. Support plan: เลือก **Basic support – Free** แล้วกด *Complete sign up*
-
-> [!TIP]
-> ถ้าหน้าจอค้างที่ "Account is being activated" ให้รอ 5-10 นาที แล้วลอง Sign in ใหม่ ไม่ต้องสมัครซ้ำ
-
-### 0.2 เปิด MFA ให้ Root User (ห้ามข้าม)
-
-1. Sign in ด้วย **Root user** ที่ <https://console.aws.amazon.com/>
-2. คลิกชื่อบัญชีมุมขวาบน → **Security credentials**
-3. หัวข้อ *Multi-factor authentication (MFA)* → **Assign MFA device**
-4. ตั้งชื่ออุปกรณ์ (เช่น `my-phone`) → เลือก **Authenticator app** → *Next*
-5. สแกน QR Code ด้วยแอป Authenticator แล้วกรอกรหัส **2 ชุดติดกัน** → *Add MFA*
-6. Sign out แล้ว Sign in ใหม่ ระบบต้องถามรหัส MFA
+## Part 0 · สมัคร AWS แบบ New Experience และตั้งทีม (25 นาที)
 
 > [!IMPORTANT]
-> **ทำไมต้องทำ?** Root user ทำได้ทุกอย่าง รวมถึงปิดบัญชีและใช้เงินไม่จำกัด ถ้ารหัสผ่านหลุดโดยไม่มี MFA คนอื่นจะเข้าบัญชีได้ทันที ในบริษัทจริง ถ้าบัญชี Root ไม่มี MFA จะถูกตีเป็นข้อบกพร่องร้ายแรงตอน Audit
+> **1 กลุ่ม = 1 AWS Account (อย่างน้อย)** ให้เลือก **หัวหน้ากลุ่ม 1 คน** เป็นเจ้าของบัญชี แล้วเชิญสมาชิกเข้า Project ด้วยอีเมลของแต่ละคน
+> **ห้ามแชร์รหัสผ่านของหัวหน้ากลุ่มให้เพื่อน** ทุกคนต้องเข้าระบบด้วยอีเมลของตัวเอง (หลัก *One person, one identity* เหมือนในบริษัทจริง)
 
-### 0.3 ตั้ง Budget แจ้งเตือนค่าใช้จ่าย
+| บทบาท | ใคร | ทำอะไรใน Part 0 |
+|---|---|---|
+| **Owner** | หัวหน้ากลุ่ม | สมัครบัญชี (0.1) ตั้งค่าความปลอดภัย (0.2) และเชิญสมาชิก (0.3) |
+| **Member** | สมาชิกทุกคน | รับคำเชิญทางอีเมลและเข้าระบบด้วยอีเมลของตัวเอง (0.3) ตรวจ Credits และ Region (0.4-0.5) |
 
-1. ช่องค้นหาด้านบนพิมพ์ **Budgets** → เปิด *Billing and Cost Management › Budgets*
-2. **Create budget** → **Use a template (simplified)** → เลือก **Zero spend budget**
-3. ใส่อีเมลของตัวเองในช่อง *Email recipients* → **Create budget**
+### 0.1 สมัครบัญชี (Owner)
 
-### 0.4 เลือก Region
+1. เปิด <https://aws.amazon.com/> แล้วกด **Create account**
+2. เลือกวิธีสมัคร (ใช้ได้ทั้งสองแบบ):
 
-มุมขวาบนเลือก **Asia Pacific (Singapore) ap-southeast-1** และ **ใช้ Region นี้ตลอดทั้งชุด Lab**
+   | วิธี | ใช้กับ |
+   |---|---|
+   | **Continue with email** | อีเมล `@spumail.com` หรือ `@gmail.com` (ระบบส่งรหัสยืนยันไปทางอีเมล) |
+   | **Sign in with Google** | บัญชี `@gmail.com` หรือ `@spumail.com` (ถ้าเป็น Google Workspace) |
+
+3. ทำตามขั้นตอนยืนยันตัวตนบนหน้าจอให้ครบ เมื่อเสร็จ ระบบจะสร้าง **Project แรก** ให้อัตโนมัติภายในไม่กี่วินาที
+4. ถ้าหน้าแรกขึ้นกล่อง **Set up Agent Toolkit for AWS** (ตั้งค่า Coding Agent) ให้ **ข้ามไปก่อน** (ใน Lab นี้เราจะสร้างทุกอย่างด้วยมือ เพื่อให้เห็นทุกชิ้นส่วนของเครือข่าย)
+
+📷 ดูภาพตัวอย่างหน้า *Sign up for AWS* และหน้า *Projects* ได้ที่ [AWS News Blog: AWS reimagines the getting started experience](https://aws.amazon.com/blogs/aws/aws-reimagines-the-getting-started-experience/)
+<!-- TODO screenshot (ผู้สอน): images/lab01-01-signup.png · images/lab01-02-projects.png -->
 
 > [!NOTE]
-> AWS มี Region **Asia Pacific (Thailand) ap-southeast-7** แล้ว แต่เป็น Region แบบ *opt-in* ที่ต้องเปิดใช้งานก่อน ใน Lab นี้จึงใช้ Singapore เพื่อให้ทุกคนเหมือนกัน
-> 🔮 **คิดต่อ:** ถ้าเป็นระบบของลูกค้าไทยจริง การเลือก Region มีผลต่ออะไรบ้าง? (Latency, กฎหมาย PDPA / Data Residency, ราคา)
+> **ไม่ต้องใช้บัตรเครดิต** สำหรับลูกค้าใหม่ส่วนใหญ่ บัญชีจะเริ่มที่ **Free plan** พร้อมเครดิตฟรี ใช้ได้ 6 เดือนหรือจนเครดิตหมด และ **ไม่ถูกเรียกเก็บเงิน** จนกว่าจะอัปเกรดเป็น Paid plan เอง
+> ถ้าหน้าจอกลับขอข้อมูลบัตร แปลว่าระบบยังไม่เปิด New Experience ให้บัญชี/อีเมลนั้น หรืออีเมลเคยผูกกับบัญชี AWS มาก่อน **ให้หยุดและแจ้งผู้สอน ห้ามกรอกบัตร**
+
+> [!CAUTION]
+> **ห้ามกด Upgrade / Add payment method** และ **ห้ามกด Activate Advanced Features** ถ้าผู้สอนไม่ได้สั่ง ปุ่มหลังนี้เปลี่ยนบัญชีไปเป็นรูปแบบเต็มและ **ย้อนกลับไม่ได้**
+
+### 0.2 ทำให้บัญชีปลอดภัย (Owner)
+
+| ถ้าสมัครด้วย | สิ่งที่ต้องทำ |
+|---|---|
+| **Google** | เปิด **2-Step Verification** ของบัญชี Google ที่ <https://myaccount.google.com/security> (ใครได้รหัส Google ไป = ได้บัญชี AWS ไปด้วย) |
+| **Email** | ไปที่การตั้งค่าบัญชี/ความปลอดภัย (คลิกชื่อบัญชีมุมขวาบน) แล้วเพิ่ม **MFA** ด้วยแอป Authenticator และตั้งรหัสผ่านที่ไม่ซ้ำกับบัญชีอื่น |
+
+> [!IMPORTANT]
+> **ทำไมต้องทำ?** บัญชีของ Owner ทำได้ทุกอย่าง รวมถึงสร้างทรัพยากรที่ใช้เครดิตหมดในคืนเดียว ถ้ารหัสผ่านหลุดโดยไม่มี MFA คนอื่นเข้าบัญชีได้ทันที ในบริษัทจริง บัญชีผู้ดูแลที่ไม่มี MFA ถือเป็นข้อบกพร่องร้ายแรงตอน Audit
+
+### 0.3 เชิญสมาชิกเข้า Project
+
+**Owner:**
+
+1. เปิด Project ของกลุ่ม → หน้า **Members** → **Invite** (เชิญสมาชิก)
+2. ใส่อีเมล `@spumail.com` หรือ `@gmail.com` ของสมาชิกทีละคน → ส่งคำเชิญ
+
+**Member:**
+
+3. เปิดอีเมลคำเชิญจาก AWS → กดยอมรับ → ตั้งรหัสผ่าน/เปิด MFA ตามขั้นตอนบนหน้าจอ
+4. เข้าระบบด้วย **อีเมลของตัวเอง** แล้วตรวจว่าเห็น Project ของกลุ่ม
+
+📷 ภาพตัวอย่างหน้า *Members*: ดูในบทความ [AWS News Blog](https://aws.amazon.com/blogs/aws/aws-reimagines-the-getting-started-experience/) (หัวข้อการเชิญสมาชิก)
+<!-- TODO screenshot (ผู้สอน): images/lab01-03-members.png -->
 
 > [!TIP]
-> **Checkpoint 0** 📸 ถ่ายภาพหน้า *Security credentials* ที่เห็นว่ามี MFA device แล้ว และหน้า *Budgets* ที่มี Zero spend budget (หลักฐาน E1)
+> ถ้าคำเชิญไม่มาภายใน 5 นาที ให้ตรวจโฟลเดอร์ **Spam/Junk** ก่อน (อีเมล `@spumail.com` มักถูกกรอง) แล้วให้ Owner ส่งใหม่ ระหว่างรอ ให้นั่งดูหน้าจอ Owner ทำ Part 1 ไปด้วยกันได้
+
+### 0.4 ตรวจเครดิต (ทุกคน)
+
+เปิดหน้า **Billing** ของ Project แล้วจดลงตาราง
+
+| รายการ | ค่า |
+|---|---|
+| Plan | Free plan |
+| Credits คงเหลือ | $ |
+| วันคงเหลือของ Free plan | |
+| ยอดที่ต้องจ่าย (Balance) | ต้องเป็น **$0.00** |
+
+> [!NOTE]
+> เครดิตของบัญชีเดียว **ใช้ร่วมกันทั้งกลุ่ม** ทุกเครื่องที่สมาชิกเปิดทิ้งไว้จะหักจากก้อนเดียวกัน จึงต้อง Stop เครื่องทุกครั้งเมื่อจบคาบ (Part 6)
+
+### 0.5 ตรวจ Region ที่ได้รับ (ทุกคน)
+
+ใน New Experience ระบบ **กำหนด Region ให้ Project อัตโนมัติ** และเปลี่ยนเองจากเมนูปกติไม่ได้ สำหรับห้องเรียนนี้คือ **Asia Pacific (Sydney) `ap-southeast-2`** เมื่อเปิดหน้า VPC หรือ EC2 ให้ดูมุมขวาบนว่าเป็น **Sydney**
+
+| ตรวจ | ค่าที่เห็น |
+|---|---|
+| Region ของ Project | |
+| ตรงกับ `ap-southeast-2` หรือไม่ | |
+
+> [!WARNING]
+> ถ้ากลุ่มได้ Region อื่น **ไม่ต้องตกใจ** ทำ Lab ได้เหมือนเดิม แค่เปลี่ยนชื่อ Availability Zone ใน Part 1 (เช่น `ap-southeast-2a` → `<region>a`) และชื่อ Prefix list ใน Part 4.4 ให้ตรงกับ Region ที่ได้ แล้วจดไว้ในใบบันทึก
+> ถ้าเปิดหน้า **VPC** หรือ **EC2** ไม่ได้ หรือเมนูหายไป ให้แจ้งผู้สอน **ห้ามกด Activate Advanced Features เอง**
+
+> [!NOTE]
+> Sydney อยู่ไกลกว่า Singapore หรือ Region Thailand (`ap-southeast-7`) จึงมี **Latency** สูงกว่า ลองวัดด้วย `Test-NetConnection` หลังสร้าง EC2 ดูว่าตอบช้าแค่ไหน (ใช้เรียนได้สบาย แต่ระบบจริงของลูกค้าไทยมักไม่เลือก Sydney)
+> 🔮 **คิดต่อ:** ถ้าเป็นระบบของลูกค้าไทยจริง การเลือก Region มีผลต่ออะไรบ้าง? (Latency, กฎหมาย PDPA / Data Residency, ราคา)
+
+### 0.6 แบ่งงานในกลุ่ม
+
+| งาน | ทำอย่างไร |
+|---|---|
+| Part 1-2 (VPC, Subnet, Security Group) | **ทำร่วมกัน 1 ชุดต่อกลุ่ม** สลับกันเป็นคนกด (Driver) ทุก Part คนอื่นอ่านขั้นตอนและตรวจ (Navigator) |
+| Part 3-4 (EC2, SSH) | **ทุกคนสร้าง EC2 และ Key Pair ของตัวเอง** ตั้งชื่อ `web-<ชื่อเล่น>` และ `key-<ชื่อเล่น>` (ในเอกสารนี้ใช้ `web-01` และ `lab-key` เป็นตัวอย่าง) |
+| Part 4.3 และ Part 5 (Break & Fix) | Driver เป็นคนเปลี่ยนกฎ **ทุกคนทดสอบพร้อมกัน** เพราะ Security Group และ NACL ใช้ร่วมกันทั้งกลุ่ม |
+
+> [!TIP]
+> **Checkpoint 0** 📸 ภาพหน้า **Members** ที่เห็นสมาชิกครบทุกคน + หน้า **Billing** ที่เห็น Free plan และยอด $0.00 + หลักฐานการเปิด MFA/2-Step Verification ของ Owner โดยปิดบังข้อมูลส่วนตัว (หลักฐาน E1)
 
 ---
 
@@ -148,11 +200,11 @@ AWS จอง IP ไว้ **5 ตัวในทุก Subnet**: ตัวแ�
 2. VPC ID: เลือก `lab-vpc`
 3. Subnet 1:
    - Name: `public-subnet-1a`
-   - Availability Zone: `ap-southeast-1a`
+   - Availability Zone: `ap-southeast-2a`
    - IPv4 subnet CIDR block: `10.0.1.0/24`
 4. กด **Add new subnet** สำหรับ Subnet 2:
    - Name: `private-subnet-1a`
-   - Availability Zone: `ap-southeast-1a`
+   - Availability Zone: `ap-southeast-2a`
    - IPv4 subnet CIDR block: `10.0.2.0/24`
 5. **Create subnet**
 6. เลือก `public-subnet-1a` → **Actions › Edit subnet settings** → ติ๊ก ✅ **Enable auto-assign public IPv4 address** → *Save*
@@ -176,6 +228,8 @@ AWS จอง IP ไว้ **5 ตัวในทุก Subnet**: ตัวแ�
 > [!IMPORTANT]
 > **"Public" ไม่ได้มาจากชื่อ** Subnet จะเป็น Public ก็ต่อเมื่อ Route Table ของมันมีเส้นทาง `0.0.0.0/0` ไปที่ Internet Gateway เท่านั้น ส่วน `private-subnet-1a` ยังใช้ *Main route table* ที่มีแค่เส้นทาง `local` จึงออกอินเทอร์เน็ตไม่ได้
 
+<!-- TODO screenshot (ผู้สอน): images/lab01-04-region.png -->
+
 ### 1.6 ตรวจทาน
 
 | ตรวจ | ผลที่ต้องเห็น | ✅ |
@@ -184,6 +238,8 @@ AWS จอง IP ไว้ **5 ตัวในทุก Subnet**: ตัวแ�
 | `public-rt` › Subnet associations | มี `public-subnet-1a` | |
 | `lab-igw` › State | **Attached** | |
 | Subnets › `public-subnet-1a` | Auto-assign public IPv4 = **Yes** | |
+
+<!-- TODO screenshot (ผู้สอน): images/lab01-05-resource-map.png -->
 
 > [!TIP]
 > **Checkpoint 1** 📸 ภาพ *Resource map* ของ `lab-vpc` (เลือก VPC แล้วดูแท็บ **Resource map**) ซึ่งต้องเห็น Subnet 2 วง, Route Table และ IGW เชื่อมกัน (หลักฐาน E2)
@@ -221,6 +277,8 @@ AWS จอง IP ไว้ **5 ตัวในทุก Subnet**: ตัวแ�
 > **My IP** คือ Public IP ที่ AWS มองเห็น ซึ่งเป็น IP ของ **Router ของมหาวิทยาลัย** (ผ่าน NAT ตาม Ch7) ไม่ใช่ IP `192.168.x.x` ของเครื่องเรา ทุกคนในห้องจึงอาจได้ IP เดียวกัน
 > ถ้ากลับไปทำที่บ้าน IP จะเปลี่ยน และต้องกลับมาแก้กฎนี้ (เป็นสาเหตุอันดับ 1 ที่ทำให้ SSH จากบ้านไม่ได้)
 
+<!-- TODO screenshot (ผู้สอน): images/lab01-06-sg-inbound.png -->
+
 ### 2.2 🔮 ทำนาย (ยังไม่ต้องทดสอบ)
 
 | # | สถานการณ์ (หลังสร้าง EC2 แล้ว) | ทำนาย: ได้ / ไม่ได้ + เหตุผล |
@@ -235,11 +293,11 @@ AWS จอง IP ไว้ **5 ตัวในทุก Subnet**: ตัวแ�
 ## Part 3 · สร้าง EC2 Instance (15 นาที)
 
 1. EC2 Dashboard → **Instances** → **Launch instances**
-2. **Name**: `web-01`
+2. **Name**: `web-<ชื่อเล่น>` (เช่น `web-oil`) เพื่อให้รู้ว่าเครื่องไหนเป็นของใครในกลุ่ม
 3. **Application and OS Images**: **Ubuntu** → **Ubuntu Server 24.04 LTS** (ต้องมีป้าย *Free tier eligible*)
 4. **Instance type**: เลือกตัวที่มีป้าย **Free tier eligible** (เช่น `t3.micro`)
 5. **Key pair (login)** → **Create new key pair**
-   - Key pair name: `lab-key`
+   - Key pair name: `key-<ชื่อเล่น>` (ตัวอย่างในเอกสารใช้ `lab-key` ให้แทนด้วยชื่อของตัวเองทุกที่)
    - Key pair type: **RSA**
    - Private key file format: **`.pem`** (สำหรับ CMD/OpenSSH)
    - **Create key pair** → ไฟล์ `lab-key.pem` จะถูกดาวน์โหลด
@@ -250,6 +308,8 @@ AWS จอง IP ไว้ **5 ตัวในทุก Subnet**: ตัวแ�
    - Subnet: **`public-subnet-1a`**
    - Auto-assign public IP: **Enable**
    - Firewall (security groups): **Select existing security group** → `lab-web-sg`
+<!-- TODO screenshot (ผู้สอน): images/lab01-07-launch-network.png -->
+
 7. **Configure storage**: ใช้ค่าเริ่มต้น (gp3 8 GiB)
 8. **Launch instance** → **View all instances**
 9. รอให้ *Instance state* = **Running** และ *Status check* = **3/3 checks passed** (ประมาณ 1-2 นาที)
@@ -395,7 +455,7 @@ Test-NetConnection 13.x.x.x -Port 22
 <summary>💡 ทำไมจึงเชื่อมต่อไม่ได้ และแก้อย่างไร</summary>
 
 การเชื่อมต่อนี้ **ไม่ได้มาจาก IP ของเรา** แต่มาจากเครื่องของบริการ EC2 Instance Connect ใน Region นั้น ซึ่งกฎ "My IP" ไม่ครอบคลุม
-แก้โดยเพิ่ม Inbound rule: Type **SSH** · Source เลือก **Prefix list** → `com.amazonaws.ap-southeast-1.ec2-instance-connect`
+แก้โดยเพิ่ม Inbound rule: Type **SSH** · Source เลือก **Prefix list** → `com.amazonaws.ap-southeast-2.ec2-instance-connect`
 บทเรียน: ต้องรู้เสมอว่า **ใครเป็นต้นทางจริง** ของการเชื่อมต่อ ก่อนเขียนกฎไฟร์วอลล์
 
 </details>
@@ -528,6 +588,9 @@ Test-NetConnection 13.x.x.x -Port 22
 
 | อาการ | ตรวจอะไรก่อน |
 |---|---|
+| สมัครแล้วระบบขอบัตรเครดิต | หยุด ห้ามกรอก แจ้งผู้สอน (อีเมลอาจเคยผูกกับบัญชี AWS หรือยังไม่ได้ New Experience) ให้ใช้บัญชีของเพื่อนในกลุ่มแทน |
+| สมาชิกไม่ได้รับอีเมลเชิญ | ตรวจ Spam/Junk · Owner พิมพ์อีเมลผิด · ให้ Owner ส่งคำเชิญใหม่ |
+| หา VPC / EC2 ที่สร้างไว้ไม่เจอ | ดูมุมขวาบนว่ายังเป็น Region **Sydney** · ตรวจว่าอยู่ใน Project ของกลุ่ม |
 | `Connection timed out` | SG ไม่มีกฎ 22 จาก IP ของเรา · My IP เปลี่ยน · NACL ไม่เปิดขาออก 1024-65535 · Subnet ไม่มี Route ไป IGW · Instance ไม่มี Public IP |
 | `Permission denied (publickey)` | Username ผิด (Ubuntu ใช้ `ubuntu`) · ใช้ Key ผิดไฟล์ · Instance สร้างด้วย Key อื่น |
 | `UNPROTECTED PRIVATE KEY FILE` | ทำขั้น `icacls` ใน 4.1 ขั้นที่ 3 |
@@ -541,7 +604,7 @@ Test-NetConnection 13.x.x.x -Port 22
 
 | รหัส | หลักฐาน | คะแนน |
 |---|---|---|
-| E1 | MFA ของ Root + Zero spend budget | 10 |
+| E1 | หน้า Members ครบทุกคน + Billing (Free plan, $0.00) + MFA ของ Owner | 10 |
 | E2 | Resource map ของ `lab-vpc` + ตารางคำนวณ Subnet 1.1 (ผลจริงจากคอลัมน์ *Available IPv4*) | 15 |
 | E3 | Instance summary (Running, Public/Private IP, VPC, Subnet) | 10 |
 | E4 | SSH สำเร็จ + ตารางสำรวจ 4.1 ขั้นที่ 5 + ตารางทำนาย P1-P4 พร้อมเหตุผล | 20 |
